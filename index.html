@@ -7,12 +7,14 @@
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#dc2743">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="InstaSave">
     
-    <!-- Icono para Apple y navegadores -->
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3955/3955024.png">
+    <!-- Icono de descarga (Nube con flecha) -->
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9326/9326466.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/9326/9326466.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -106,22 +108,28 @@
         <div id="statusMsg" class="mt-4 text-center text-sm font-bold hidden p-4 rounded-xl transition-all duration-300"></div>
     </div>
 
-    <!-- Script PWA (Manifiesto Virtual y Service Worker) -->
+    <!-- Script PWA -->
     <script>
-        // Crear manifiesto dinÃ¡micamente con icono mejorado
         const manifest = {
             "name": "InstaSave Pro RLTR",
             "short_name": "InstaSave",
-            "start_url": ".",
+            "start_url": "./",
             "display": "standalone",
+            "orientation": "portrait",
             "background_color": "#fdfcfb",
             "theme_color": "#dc2743",
             "icons": [
                 {
-                    "src": "https://cdn-icons-png.flaticon.com/512/3955/3955024.png",
+                    "src": "https://cdn-icons-png.flaticon.com/512/9326/9326466.png",
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "any"
+                },
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/9326/9326466.png",
                     "sizes": "512x512",
                     "type": "image/png",
-                    "purpose": "any maskable"
+                    "purpose": "maskable"
                 }
             ]
         };
@@ -133,13 +141,16 @@
         link.href = manifestURL;
         document.head.appendChild(link);
 
-        // Registro de Service Worker bÃ¡sico
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const swCode = `self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request)); });`;
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => self.clients.claim());
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+                `;
                 const swBlob = new Blob([swCode], {type: 'application/javascript'});
                 const swURL = URL.createObjectURL(swBlob);
-                navigator.serviceWorker.register(swURL).catch(err => console.log("SW error", err));
+                navigator.serviceWorker.register(swURL);
             });
         }
     </script>
@@ -192,7 +203,6 @@
                 }
 
                 const result = await response.json();
-                
                 let videoUrl = null;
 
                 if (result.media && Array.isArray(result.media) && result.media.length > 0) {
