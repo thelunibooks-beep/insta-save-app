@@ -10,7 +10,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="InstaSave">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174855.png">
+    
+    <!-- Icono para Apple y navegadores -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3955/3955024.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -106,7 +108,7 @@
 
     <!-- Script PWA (Manifiesto Virtual y Service Worker) -->
     <script>
-        // Crear manifiesto dinÃ¡micamente para que sea instalable
+        // Crear manifiesto dinÃ¡micamente con icono mejorado
         const manifest = {
             "name": "InstaSave Pro RLTR",
             "short_name": "InstaSave",
@@ -116,9 +118,10 @@
             "theme_color": "#dc2743",
             "icons": [
                 {
-                    "src": "https://cdn-icons-png.flaticon.com/512/174/174855.png",
+                    "src": "https://cdn-icons-png.flaticon.com/512/3955/3955024.png",
                     "sizes": "512x512",
-                    "type": "image/png"
+                    "type": "image/png",
+                    "purpose": "any maskable"
                 }
             ]
         };
@@ -130,7 +133,7 @@
         link.href = manifestURL;
         document.head.appendChild(link);
 
-        // Registro de Service Worker bÃ¡sico para permitir la instalaciÃ³n
+        // Registro de Service Worker bÃ¡sico
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swCode = `self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request)); });`;
