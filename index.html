@@ -29,6 +29,8 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center p-4">
@@ -46,7 +48,7 @@
 
         <div class="glass p-6 rounded-3xl shadow-xl mb-6">
             <div class="relative">
-                <input type="text" id="urlInput" placeholder="Pega el enlace del Reel o Video..." class="w-full px-4 py-4 rounded-xl border-2 border-gray-100 focus:border-pink-500 focus:outline-none transition-all pr-12 text-gray-700 shadow-sm">
+                <input type="text" id="urlInput" placeholder="Pega el enlace de Instagram aquÃ­..." class="w-full px-4 py-4 rounded-xl border-2 border-gray-100 focus:border-pink-500 focus:outline-none transition-all pr-12 text-gray-700 shadow-sm">
                 <button onclick="handlePaste()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -55,35 +57,33 @@
             </div>
 
             <button onclick="fetchInstagramContent()" id="btnFetch" class="w-full mt-4 insta-gradient text-white font-semibold py-4 rounded-xl shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                <span id="btnText">Analizar Enlace</span>
+                <span id="btnText">Analizar Video</span>
                 <div id="loader" class="loader hidden"></div>
             </button>
         </div>
 
         <div id="resultCard" class="hidden glass p-6 rounded-3xl shadow-xl animate-fade-in">
-            <div id="previewContainer" class="relative rounded-2xl overflow-hidden aspect-video bg-gray-200 mb-4 shadow-inner">
-                <!-- AquÃ­ se cargarÃ¡ la imagen real del video -->
-                <img id="previewImage" src="" alt="Preview" class="w-full h-full object-cover">
+            <div id="previewContainer" class="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 mb-4 shadow-inner border border-gray-200">
+                <img id="previewImage" src="" alt="Vista previa" class="w-full h-full object-contain">
             </div>
 
             <div class="space-y-3">
-                <h3 class="font-bold text-gray-800 text-lg">Contenido Encontrado</h3>
+                <h3 class="font-bold text-gray-800 text-lg">Â¡Video encontrado!</h3>
                 <div class="grid grid-cols-1 gap-3 mt-4">
-                    <a id="downloadBtn" href="#" target="_blank" download="instagram_video.mp4" class="bg-gray-800 text-white py-4 rounded-xl font-medium hover:bg-black transition-colors flex items-center justify-center gap-2">
+                    <a id="downloadBtn" href="#" target="_blank" class="bg-gray-800 text-white py-4 rounded-xl font-medium hover:bg-black transition-colors flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
-                        Descargar Archivo Real
+                        Descargar Video Real
                     </a>
                 </div>
             </div>
         </div>
 
-        <div id="statusMsg" class="mt-4 text-center text-sm font-medium hidden"></div>
+        <div id="statusMsg" class="mt-4 text-center text-sm font-medium hidden p-3 rounded-lg"></div>
     </div>
 
     <script>
-        // Esta es una soluciÃ³n usando un proxy gratuito para evitar bloqueos
         async function fetchInstagramContent() {
             const url = document.getElementById('urlInput').value.trim();
             const btnText = document.getElementById('btnText');
@@ -92,24 +92,27 @@
             const statusMsg = document.getElementById('statusMsg');
 
             if (!url.includes('instagram.com')) {
-                alert("Pega un enlace de Instagram vÃ¡lido");
+                showStatus("Por favor, pega un enlace de Instagram vÃ¡lido.", "text-red-600 bg-red-50");
                 return;
             }
 
-            // UI Loading
+            // Reset UI
             loader.classList.remove('hidden');
-            btnText.innerText = "Buscando...";
+            btnText.innerText = "Analizando...";
             resultCard.classList.add('hidden');
+            statusMsg.classList.add('hidden');
 
             try {
-                // Intentamos usar un servicio de terceros que permite descarga directa (ejemplo educativo)
-                // Nota: Los descargadores gratuitos suelen cambiar sus APIs. 
-                // Esta URL intenta obtener el enlace directo procesÃ¡ndolo.
+                // Usamos un servicio de extracciÃ³n que devuelve datos reales. 
+                // Si el enlace es de un Reel, esta API intentarÃ¡ obtener la fuente directa.
                 const apiUrl = `https://api.sssgram.com/st-tik/ins/dl?url=${encodeURIComponent(url)}`;
                 
                 const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error("Error en la respuesta del servidor");
+                
                 const data = await response.json();
 
+                // Verificamos si los datos contienen la URL del video real
                 if (data && data.result && data.result.insVideoUrl) {
                     const videoUrl = data.result.insVideoUrl;
                     const thumbUrl = data.result.thumbnail;
@@ -118,30 +121,33 @@
                     document.getElementById('downloadBtn').href = videoUrl;
                     
                     resultCard.classList.remove('hidden');
-                    showStatus("Â¡Video encontrado!", "text-green-600");
+                    showStatus("Â¡Contenido listo para descargar!", "text-green-600 bg-green-50");
                 } else {
-                    throw new Error("No se pudo extraer el video");
+                    throw new Error("No se pudo extraer la URL del video. Es posible que el video sea privado o el enlace sea incorrecto.");
                 }
             } catch (error) {
                 console.error(error);
-                showStatus("Error al obtener el video. Intenta con otro enlace o mÃ¡s tarde.", "text-red-500");
-                alert("Instagram ha bloqueado la peticiÃ³n. Para que funcione 100% siempre, necesitarÃ­as una API Key de RapidAPI.");
+                showStatus(error.message, "text-red-500 bg-red-50");
             } finally {
                 loader.classList.add('hidden');
-                btnText.innerText = "Analizar Enlace";
+                btnText.innerText = "Analizar Video";
             }
         }
 
-        function showStatus(msg, color) {
+        function showStatus(msg, classes) {
             const statusMsg = document.getElementById('statusMsg');
             statusMsg.innerText = msg;
-            statusMsg.className = `mt-4 text-center text-sm font-medium ${color}`;
+            statusMsg.className = `mt-4 text-center text-sm font-medium ${classes}`;
             statusMsg.classList.remove('hidden');
         }
 
         async function handlePaste() {
-            const text = await navigator.clipboard.readText();
-            document.getElementById('urlInput').value = text;
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('urlInput').value = text;
+            } catch (err) {
+                console.error('Error al pegar:', err);
+            }
         }
     </script>
 </body>
