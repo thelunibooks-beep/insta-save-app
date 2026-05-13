@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InstaSave Pro - RLTR Edition</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#dc2743">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="InstaSave">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174855.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -30,7 +38,6 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* AnimaciĂłn suave para la apariciĂłn del resultado */
         .fade-in {
             animation: fadeIn 0.4s ease-out;
         }
@@ -97,8 +104,44 @@
         <div id="statusMsg" class="mt-4 text-center text-sm font-bold hidden p-4 rounded-xl transition-all duration-300"></div>
     </div>
 
+    <!-- Script PWA (Manifiesto Virtual y Service Worker) -->
     <script>
-        // Limpieza de URL para evitar errores de la API
+        // Crear manifiesto dinÃ¡micamente para que sea instalable
+        const manifest = {
+            "name": "InstaSave Pro RLTR",
+            "short_name": "InstaSave",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#fdfcfb",
+            "theme_color": "#dc2743",
+            "icons": [
+                {
+                    "src": "https://cdn-icons-png.flaticon.com/512/174/174855.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                }
+            ]
+        };
+        const stringManifest = JSON.stringify(manifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestURL;
+        document.head.appendChild(link);
+
+        // Registro de Service Worker bÃ¡sico para permitir la instalaciÃ³n
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `self.addEventListener('fetch', function(e) { e.respondWith(fetch(e.request)); });`;
+                const swBlob = new Blob([swCode], {type: 'application/javascript'});
+                const swURL = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swURL).catch(err => console.log("SW error", err));
+            });
+        }
+    </script>
+
+    <script>
         function cleanInstagramUrl(url) {
             try {
                 const urlObj = new URL(url);
@@ -116,7 +159,6 @@
             const resultCard = document.getElementById('resultCard');
             const statusMsg = document.getElementById('statusMsg');
             
-            // Credenciales RapidAPI
             const RAPID_API_KEY = "65d0cd331cmsha22430843101f76p1fbb20jsnb3e1cb4f6a62"; 
 
             if (!rawUrl.includes('instagram.com')) {
@@ -126,7 +168,6 @@
 
             const cleanUrl = cleanInstagramUrl(rawUrl);
 
-            // UI State: Cargando
             loader.classList.remove('hidden');
             btnText.innerText = "Buscando...";
             resultCard.classList.add('hidden');
@@ -151,7 +192,6 @@
                 
                 let videoUrl = null;
 
-                // Estructura detectada en el test del usuario
                 if (result.media && Array.isArray(result.media) && result.media.length > 0) {
                     const videoItem = result.media.find(m => m.type === 'video');
                     const selectedItem = videoItem || result.media[0];
@@ -161,7 +201,7 @@
                 if (videoUrl) {
                     document.getElementById('downloadLink').href = videoUrl;
                     resultCard.classList.remove('hidden');
-                    showStatus("ÂĄContenido encontrado!", "text-green-800 bg-green-100/80 border border-green-200");
+                    showStatus("Â¡Contenido encontrado!", "text-green-800 bg-green-100/80 border border-green-200");
                 } else {
                     throw new Error("No se pudo obtener el enlace directo.");
                 }
